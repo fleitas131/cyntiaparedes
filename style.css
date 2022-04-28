@@ -84,6 +84,11 @@ header .logo {
 
 }
 
+header .logo img {
+    border-radius: 50%;
+    width: 55%;
+}
+
 header .logo span {
     text-transform: uppercase;
     color: var(--second-color);
