@@ -34,6 +34,17 @@ section {
     background-color: var(--forth-color);
 }
 
+.heading {
+    font-size: 6rem;
+    padding-bottom: 1rem;
+    color: black;
+    text-transform: uppercase;
+}
+
+.heading span {
+    color: var(--second-color);
+}
+
 .btn {
     display: inline-block;
     margin-top: 1rem;
@@ -91,7 +102,7 @@ header .navbar a:hover {
 }
 
 header .follow a {
-    font-size: 2.5rem;
+    font-size: 3rem;
     color: white;
     margin: 0 .7rem;
 
