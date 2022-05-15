@@ -177,6 +177,7 @@ header .follow a:hover {
     font-size: 1.5rem;
     color: black;
     padding: .5rem 0;
+    text-transform: none;
 }
 
 
