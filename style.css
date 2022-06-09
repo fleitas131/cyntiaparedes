@@ -174,7 +174,7 @@ header .follow a:hover {
 }
 
 .home .content .text {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: black;
     padding: .5rem 0;
     text-transform: none;
@@ -210,6 +210,8 @@ header .follow a:hover {
 .about .row-1 .content h3 {
     color: #333;
     font-size: 3.5rem;
+    text-transform: none;
+    font-style: italic;
 }
 
 .about .row-1 .content p {
