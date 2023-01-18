@@ -1,0 +1,206 @@
+------------------------------------------------------------------------------
+  -- Author  : CLT - AFC 
+  -- 22/08/2022
+  -- HU75169
+  -- Procedimiento que verifica y busca cheques por codigo de cliente y de
+  -- sucursal ingresados 
+  procedure sp_chqger_listado_V2(pi_cliekey in varchar2,
+                                 pi_estado  in ordenes_pagos.estado%type,
+                                 pi_sucu    in ordenes_pagos.sucdestino%type,
+                                 pi_fecha   in ordenes_pagos.fechalta%type,
+                                 pi_fecha2  in ordenes_pagos.fechalta%type,
+                                 po_cursor  OUT REF_CURSOR) AS
+    v_cedula    varchar2(15);
+    v_tipo      varchar2(1);
+    v_documento varchar2(10);
+    v_sql       clob;
+  begin
+  
+if (pi_cliekey = '99') then --> si son todos los clientes
+        if trim(pi_estado) = 'G' then --> CHEQUE PENDIENTE DE IMPRESIÓN
+            open po_cursor for
+            select c.SERIE,
+            c.SECUENCIA,
+            c.MONTO,
+            c.REFCOMPROB,
+            substr(c.BENEFICIARIO, 1, 60) BENEFICIARIO,
+            c.BENEFIDOC,
+            c.CONFSERIE,
+            c.CONFSECUEN,
+            c.estado estado,
+            c.sucdestino,
+            wilson1.f_sucursal_nombre(c.sucdestino) suc_name, ---nro y nombre de sucursal para reporte
+            c.fechalta,
+            c.ctadeb,
+            f_get_name(c.ctadeb) nombre_cta,
+            c.comenalta COMENALTA,
+            c.moneda,
+            (SELECT SS.DIV_NAME
+            FROM CONDIVIS SS
+            WHERE SS.DIV_SIGLA = C.MONEDA) MONEDA_NAME,
+            c.nro_ip,
+            c.ctadeb,
+            c.fconfirma,
+            c.concepto,
+            c.cargos porc_comision,
+            (select trim(pp.doc_autori) || ' ' || trim(pp.autorizado)
+            from userweb.pp_cheq_ger pp
+            where pp.id = c.refcomprob
+            and pp.monto = c.monto) autorizado,
+            (select trim(pp.doc_autori2) || ' ' || trim(pp.autorizado2)
+            from userweb.pp_cheq_ger pp
+            where pp.id = c.refcomprob
+            and pp.monto = c.monto) autorizado2
+            from ordenes_pagos c
+            where c.estado = pi_estado
+            and c.sucdestino = pi_sucu
+            and c.confirma = 'S'
+            order by c.moneda, c.confserie, c.confsecuen;
+        else
+			open po_cursor for
+			select c.SERIE,
+               c.SECUENCIA,
+               c.MONTO,
+               c.REFCOMPROB,
+               substr(c.BENEFICIARIO, 1, 60) BENEFICIARIO,
+               c.BENEFIDOC,
+               c.CONFSERIE,
+               c.CONFSECUEN,
+               c.estado estado,
+               c.sucdestino,
+               wilson1.f_sucursal_nombre(c.sucdestino) suc_name, ---nro y nombre de sucursal para reporte
+               c.fechalta,
+               c.ctadeb,
+               f_get_name(c.ctadeb) nombre_cta,
+               c.comenalta COMENALTA,
+               c.moneda,
+               (SELECT SS.DIV_NAME
+                  FROM CONDIVIS SS
+                 WHERE SS.DIV_SIGLA = C.MONEDA) MONEDA_NAME,
+               c.nro_ip,
+               c.ctadeb,
+               c.fconfirma,
+               c.concepto,
+               c.cargos porc_comision,
+               (select trim(pp.doc_autori) || ' ' || trim(pp.autorizado)
+                  from userweb.pp_cheq_ger pp
+                 where pp.id = c.refcomprob
+                   and pp.monto = c.monto) autorizado,
+               (select trim(pp.doc_autori2) || ' ' || trim(pp.autorizado2)
+                  from userweb.pp_cheq_ger pp
+                 where pp.id = c.refcomprob
+                   and pp.monto = c.monto) autorizado2
+          from ordenes_pagos c
+         where c.estado in ('I', 'G')
+         and c.sucdestino = pi_sucu
+           and c.confirma = 'S'
+           and (to_char(c.fconfirma, 'DD/MM/YYYY') >= pi_fecha) 
+		   and (to_char(c.fconfirma, 'DD/MM/YYYY') <= pi_fecha2)
+         order by c.moneda, c.confserie, c.confsecuen;
+      
+		end if;
+    
+    else --> sigue el proceso normal
+    
+      select c.clie_tipop, ltrim(c.clie_cedul, '0')
+        into v_tipo, v_cedula
+        from wilson1.credclie c
+       where c.clie_key = pi_cliekey;
+    
+      if (v_tipo = 'J') then
+        v_documento := substr(v_cedula, 1, 8) || '-' ||
+                       substr(v_cedula, 9, 1);
+      else
+        v_documento := v_cedula;
+      end if;
+    
+      if trim(pi_estado) in ('G', 'I') then
+      
+        open po_cursor for
+          select c.SERIE,
+                 c.SECUENCIA,
+                 c.MONTO,
+                 c.REFCOMPROB,
+                 substr(c.BENEFICIARIO, 1, 60) BENEFICIARIO,
+                 c.BENEFIDOC,
+                 c.CONFSERIE,
+                 c.CONFSECUEN,
+                 c.estado estado,
+                 c.sucdestino,
+                 wilson1.f_sucursal_nombre(c.sucdestino) suc_name, ---nro y nombre de sucursal para reporte
+                 c.fechalta,
+                 c.ctadeb,
+                 f_get_name(c.ctadeb) nombre_cta,
+                 c.comenalta COMENALTA,
+                 c.moneda,
+                 (SELECT SS.DIV_NAME
+                    FROM CONDIVIS SS
+                   WHERE SS.DIV_SIGLA = C.MONEDA) MONEDA_NAME,
+                 c.nro_ip,
+                 c.ctadeb,
+                 c.fconfirma,
+                 c.concepto,
+                 c.cargos porc_comision,
+                 (select trim(pp.doc_autori) || ' ' || trim(pp.autorizado)
+                    from userweb.pp_cheq_ger pp
+                   where pp.id = c.refcomprob
+                     and pp.monto = c.monto) autorizado,
+                 (select trim(pp.doc_autori2) || ' ' || trim(pp.autorizado2)
+                    from userweb.pp_cheq_ger pp
+                   where pp.id = c.refcomprob
+                     and pp.monto = c.monto) autorizado2
+            from ordenes_pagos c
+           where trim(c.benefidoc) = v_documento 
+                --v_cedula                         |
+                --where c.ordenesctas = pi_empresa | CLT - AFC HU75169 - 22/08/2022
+             and c.sucdestino = pi_sucu       
+             and c.estado = pi_estado
+             and c.confirma = 'S'
+             and (to_char(c.fconfirma, 'DD/MM/YYYY') >= pi_fecha and
+                  to_char(c.fconfirma, 'DD/MM/YYYY') <= pi_fecha2)
+           order by c.moneda, c.confserie, c.confsecuen; --c.fconfirma; | CLT - AFC HU75169 - 22/08/2022
+      ELSE
+        open po_cursor for
+          select c.SERIE,
+                 c.SECUENCIA,
+                 c.MONTO,
+                 c.REFCOMPROB,
+                 c.BENEFICIARIO,
+                 c.BENEFIDOC,
+                 c.CONFSERIE,
+                 c.CONFSECUEN,
+                 hh.de_estado,
+                 c.sucdestino,
+                 wilson1.f_sucursal_nombre(c.sucdestino) suc_name, ---nro y nombre de sucursal para reporte
+                 c.fechalta,
+                 c.ctadeb,
+                 f_get_name(c.ctadeb) nombre_cta,
+                 decode(hh.de_estado, '9', 'A', 'G') estado,
+                 C.MONEDA,
+                 (SELECT SS.DIV_NAME
+                    FROM CONDIVIS SS
+                   WHERE SS.DIV_SIGLA = C.MONEDA) MONEDA_NAME,
+                 (select trim(pp.doc_autori) || ' ' || trim(pp.autorizado)
+                    from userweb.pp_cheq_ger pp
+                   where pp.id = c.refcomprob
+                     and pp.monto = c.monto) autorizado,
+                 (select trim(pp.doc_autori2) || ' ' || trim(pp.autorizado2)
+                    from userweb.pp_cheq_ger pp
+                   where pp.id = c.refcomprob
+                     and pp.monto = c.monto) autorizado2
+            from ordenes_pagos c, ccchede hh
+           where trim(c.benefidoc) = v_documento 
+                --v_cedula                         |
+                --where c.ordenesctas = pi_empresa | CLT - AFC HU75169 - 22/08/2022
+             and c.sucdestino = pi_sucu       
+             and c.confserie = hh.de_serie
+             and c.confsecuen = hh.de_numero
+             and c.sucdestino = hh.de_suc
+             and (to_char(c.fechalta, 'DD/MM/YYYY') >= pi_fecha and
+                  to_char(c.fechalta, 'DD/MM/YYYY') <= pi_fecha2)
+             and c.estado = 'A'
+             and hh.de_estado = '9'
+           order by 7, 8;
+      end if;
+    end if;
+  end sp_chqger_listado_V2;
